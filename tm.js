@@ -1,6 +1,6 @@
 const MODEL_URL = "https://dh2242.github.io/ELITE_RETRO_GAME/model/";
 
-let model, webcam, maxPredictions;
+let model, tmWebcam, maxPredictions;
 
 async function initTM() {
     const modelURL = MODEL_URL + "model.json";
@@ -10,17 +10,28 @@ async function initTM() {
     maxPredictions = model.getTotalClasses();
 
     const flip = true;
-    webcam = new tmImage.Webcam(260, 260, flip);
-    await webcam.setup();
-    await webcam.play();
+    tmWebcam = new tmImage.Webcam(260, 260, flip);
+    await tmWebcam.setup();
+    await tmWebcam.play();
 
-    document.getElementById("webcam").srcObject = webcam.webcam.stream;
+    // Stop the stream that game.js started on the <video> element
+    const videoEl = document.getElementById("webcam");
+    if (videoEl.srcObject) {
+        videoEl.srcObject.getTracks().forEach(t => t.stop());
+    }
+
+    // Swap the <video> for TM's canvas so the feed actually renders
+    tmWebcam.canvas.style.width = "100%";
+    tmWebcam.canvas.style.borderRadius = "12px";
+    tmWebcam.canvas.style.marginBottom = "10px";
+    videoEl.replaceWith(tmWebcam.canvas);
+    tmWebcam.canvas.id = "webcam";
 
     window.requestAnimationFrame(loop);
 }
 
 async function loop() {
-    webcam.update();
+    tmWebcam.update();
     await predict();
     window.requestAnimationFrame(loop);
 }
@@ -28,28 +39,28 @@ async function loop() {
 const classToGesture = {
     "left": "left",
     "fist": "fist",
-    "nothing": "nothing",
     "right": "right"
+    // "nothing" is intentionally omitted — no hit triggered
 };
-
 let cooldown = false;
 
 async function predict() {
-    const prediction = await model.predict(webcam.canvas);
+    const prediction = await model.predict(tmWebcam.canvas);
 
     let bestClass = null;
     let bestProb = 0;
 
-    prediction.forEach(p => {
+    for (const p of prediction) {
         if (p.probability > bestProb) {
             bestProb = p.probability;
             bestClass = p.className;
         }
-    });
+    }
 
     if (!bestClass) return;
 
-    document.getElementById("gestureLabel").textContent = bestClass;
+    document.getElementById("gestureLabel").textContent =
+        `${bestClass} (${(bestProb * 100).toFixed(0)}%)`;
 
     if (bestProb > 0.85 && !cooldown) {
         const gesture = classToGesture[bestClass];
@@ -62,4 +73,3 @@ async function predict() {
 }
 
 initTM();
-

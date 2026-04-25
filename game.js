@@ -1,15 +1,14 @@
 // === CONFIG ===
-const lanes = 4;
-const laneKeys = ["a", "s", "d", "f"];
-const laneColors = ["red", "yellow", "green", "blue"];
+const lanes = 3;
+const laneKeys = ["a", "s", "d"];
+const laneColors = ["red", "yellow", "blue"];
 
-// Gesture mapping
-const gestureToLane = { left: 0, fist: 1, nothing: 2, right: 3 };
+const gestureToLane = { left: 0, fist: 1, right: 2 };
 
 // Game tuning
-const noteSpeed = 0.12;
-const spawnInterval = 600;
-const hitWindow = 150;
+const noteSpeed = 0.10;
+const spawnInterval = 1000;
+const hitWindow = 200;
 
 // DOM references
 const gameArea = document.querySelector(".game-area");
